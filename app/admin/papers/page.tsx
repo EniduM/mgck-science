@@ -185,6 +185,8 @@ export default function PapersManagement() {
   };
 
   const subjects = ['Agriculture', 'Biology', 'BST', 'Chemistry', 'Maths', 'Physics', 'Other'];
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 16 }, (_, index) => currentYear + 5 - index);
 
   return (
     <AdminLayout
@@ -306,7 +308,7 @@ export default function PapersManagement() {
                   }
                   className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-gold transition-colors"
                 >
-                  {[2024, 2025, 2026, 2027].map((year) => (
+                  {yearOptions.map((year) => (
                     <option key={year} value={year} className="bg-navy">
                       {year}
                     </option>
