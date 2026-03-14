@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Plus, Trash2, Download, Upload, X, AlertCircle, Pencil } from 'lucide-react';
 import AdminLayout from '@/src/components/AdminLayout';
 import { getPapers, addPaper, deletePaper, updatePaper } from '@/src/lib/database';
+import { getDownloadUrl } from '@/src/lib/cloudinary';
 
 import { GlassCard } from '@/src/components/ThemeComponents';
 import ConfirmDialog from '@/src/components/ConfirmDialog';
@@ -454,7 +455,7 @@ export default function PapersManagement() {
 
                 <div className="flex gap-2 pt-4 border-t border-white/10 mt-auto">
                   <motion.a
-                    href={paper.downloadUrl}
+                    href={getDownloadUrl(paper.downloadUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.05 }}
