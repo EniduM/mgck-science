@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/src/components/Navbar';
 import FloatingParticles from '@/src/components/FloatingParticles';
 import { getPapers, getUniquePaperValues, Paper } from '@/src/lib/database';
+import { getDownloadUrl } from '@/src/lib/cloudinary';
 import { Search, Download, Filter, Loader2, BookOpen, FileText, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface FilterState {
@@ -94,7 +95,7 @@ export default function PapersPage() {
   };
 
   const handleDownload = (paper: Paper) => {
-    window.open(paper.downloadUrl, '_blank');
+    window.open(getDownloadUrl(paper.downloadUrl), '_blank', 'noopener,noreferrer');
   };
 
   // Group filtered papers: year (desc) → subject → papers
