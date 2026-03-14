@@ -5,7 +5,8 @@ import { motion } from 'framer-motion';
 import { Plus, Trash2, Download, Upload, X, AlertCircle, Pencil } from 'lucide-react';
 import AdminLayout from '@/src/components/AdminLayout';
 import { getPapers, addPaper, deletePaper, updatePaper } from '@/src/lib/database';
-import { getDownloadUrl } from '@/src/lib/cloudinary';
+import { storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 import { GlassCard } from '@/src/components/ThemeComponents';
 import ConfirmDialog from '@/src/components/ConfirmDialog';
@@ -39,6 +40,13 @@ export default function PapersManagement() {
     medium: 'English' as 'Sinhala' | 'English',
   });
   const [customSubject, setCustomSubject] = useState('');
+
+  const sanitizePathSegment = (value: string) =>
+    value
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-zA-Z0-9-_]/g, '')
+      .toLowerCase();
 
   useEffect(() => {
     fetchPapers();
@@ -119,13 +127,6 @@ export default function PapersManagement() {
       setUploading(true);
       setError('');
 
-      if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
-        throw new Error('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is not configured');
-      }
-      if (!process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) {
-        throw new Error('NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET is not configured');
-      }
-
       let downloadUrl = editingPaper?.downloadUrl ?? '';
       let fileSize = editingPaper?.fileSize ?? '';
       const selectedSubject =
@@ -133,22 +134,13 @@ export default function PapersManagement() {
 
       // Upload new file if provided
       if (file) {
-        const data = new FormData();
-        data.append('file', file);
-        data.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
-        data.append('folder', `mgck-science/papers/${formData.year}/${selectedSubject}`);
+        const subjectPath = sanitizePathSegment(selectedSubject) || 'other';
+        const originalName = file.name.replace(/\.pdf$/i, '');
+        const fileName = `${sanitizePathSegment(originalName) || 'paper'}-${Date.now()}.pdf`;
+        const storageRef = ref(storage, `papers/${formData.year}/${subjectPath}/${fileName}`);
 
-        const uploadRes = await fetch(
-          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`,
-          {
-            method: 'POST',
-            body: data,
-          }
-        );
-
-        const uploadData = await uploadRes.json();
-        if (!uploadRes.ok) throw new Error(uploadData.error?.message ?? uploadData.error ?? 'Upload failed');
-        downloadUrl = uploadData.secure_url;
+        await uploadBytes(storageRef, file, { contentType: 'application/pdf' });
+        downloadUrl = await getDownloadURL(storageRef);
         fileSize = (file.size / 1024).toFixed(2) + ' KB';
       }
 
@@ -455,7 +447,7 @@ export default function PapersManagement() {
 
                 <div className="flex gap-2 pt-4 border-t border-white/10 mt-auto">
                   <motion.a
-                    href={getDownloadUrl(paper.downloadUrl)}
+                    href={paper.downloadUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.05 }}
