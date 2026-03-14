@@ -48,8 +48,9 @@ export default function PapersManagement() {
       .replace(/[^a-zA-Z0-9-_]/g, '')
       .toLowerCase();
 
-  const getPaperDownloadUrl = (url: string) => {
-    if (!url) return '';
+  const getPaperDownloadUrl = (url: unknown) => {
+    if (typeof url !== 'string' || !url.trim()) return '';
+
     if (url.includes('res.cloudinary.com') && url.includes('/upload/fl_attachment/')) {
       return url;
     }

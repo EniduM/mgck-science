@@ -35,8 +35,9 @@ export default function PapersPage() {
   const [years, setYears] = useState<number[]>([]);
   const mediums = ['Sinhala', 'English'];
 
-  const getPaperDownloadUrl = (url: string) => {
-    if (!url) return '';
+  const getPaperDownloadUrl = (url: unknown) => {
+    if (typeof url !== 'string' || !url.trim()) return '';
+
     if (url.includes('res.cloudinary.com') && url.includes('/upload/fl_attachment/')) {
       return url;
     }
