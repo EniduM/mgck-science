@@ -35,6 +35,14 @@ export default function PapersPage() {
   const [years, setYears] = useState<number[]>([]);
   const mediums = ['Sinhala', 'English'];
 
+  const getPaperDownloadUrl = (url: string) => {
+    if (!url) return '';
+    if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
+      return url.replace('/upload/', '/upload/fl_attachment/');
+    }
+    return url;
+  };
+
   // Load papers and filter options
   useEffect(() => {
     const loadData = async () => {
@@ -94,7 +102,7 @@ export default function PapersPage() {
   };
 
   const handleDownload = (paper: Paper) => {
-    window.open(paper.downloadUrl, '_blank', 'noopener,noreferrer');
+    window.open(getPaperDownloadUrl(paper.downloadUrl), '_blank', 'noopener,noreferrer');
   };
 
   // Group filtered papers: year (desc) → subject → papers

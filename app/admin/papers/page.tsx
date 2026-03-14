@@ -48,6 +48,14 @@ export default function PapersManagement() {
       .replace(/[^a-zA-Z0-9-_]/g, '')
       .toLowerCase();
 
+  const getPaperDownloadUrl = (url: string) => {
+    if (!url) return '';
+    if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
+      return url.replace('/upload/', '/upload/fl_attachment/');
+    }
+    return url;
+  };
+
   useEffect(() => {
     fetchPapers();
   }, []);
@@ -447,7 +455,7 @@ export default function PapersManagement() {
 
                 <div className="flex gap-2 pt-4 border-t border-white/10 mt-auto">
                   <motion.a
-                    href={paper.downloadUrl}
+                    href={getPaperDownloadUrl(paper.downloadUrl)}
                     target="_blank"
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.05 }}
