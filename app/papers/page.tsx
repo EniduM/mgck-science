@@ -37,8 +37,14 @@ export default function PapersPage() {
 
   const getPaperDownloadUrl = (url: string) => {
     if (!url) return '';
+    if (url.includes('res.cloudinary.com') && url.includes('/upload/fl_attachment/')) {
+      return url;
+    }
     if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
       return url.replace('/upload/', '/upload/fl_attachment/');
+    }
+    if (url.includes('firebasestorage.googleapis.com') && !url.includes('alt=media')) {
+      return url.includes('?') ? `${url}&alt=media` : `${url}?alt=media`;
     }
     return url;
   };
