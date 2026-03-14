@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Trash2, Download, Upload, X, AlertCircle, Pencil } from 'lucide-react';
 import AdminLayout from '@/src/components/AdminLayout';
@@ -38,6 +38,11 @@ export default function PapersManagement() {
     medium: 'English' as 'Sinhala' | 'English',
   });
   const [customSubject, setCustomSubject] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterSubject, setFilterSubject] = useState('all');
+  const [filterYear, setFilterYear] = useState('all');
+  const [filterMedium, setFilterMedium] = useState('all');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'title'>('newest');
 
   useEffect(() => {
     fetchPapers();
@@ -204,6 +209,39 @@ export default function PapersManagement() {
   const subjects = ['Agriculture', 'Biology', 'BST', 'Chemistry', 'Maths', 'Physics', 'Other'];
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 16 }, (_, index) => currentYear + 5 - index);
+  const availableSubjects = useMemo(
+    () => Array.from(new Set(papers.map((paper) => paper.subject))).sort((a, b) => a.localeCompare(b)),
+    [papers]
+  );
+  const availableYears = useMemo(
+    () => Array.from(new Set(papers.map((paper) => paper.year))).sort((a, b) => b - a),
+    [papers]
+  );
+
+  const filteredPapers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    const filtered = papers.filter((paper) => {
+      const matchesSearch =
+        query.length === 0 ||
+        paper.title.toLowerCase().includes(query) ||
+        paper.subject.toLowerCase().includes(query) ||
+        paper.medium.toLowerCase().includes(query);
+      const matchesSubject = filterSubject === 'all' || paper.subject === filterSubject;
+      const matchesYear = filterYear === 'all' || paper.year === Number.parseInt(filterYear, 10);
+      const matchesMedium = filterMedium === 'all' || paper.medium === filterMedium;
+
+      return matchesSearch && matchesSubject && matchesYear && matchesMedium;
+    });
+
+    filtered.sort((a, b) => {
+      if (sortBy === 'title') return a.title.localeCompare(b.title);
+      if (sortBy === 'oldest') return a.year - b.year;
+      return b.year - a.year;
+    });
+
+    return filtered;
+  }, [papers, searchQuery, filterSubject, filterYear, filterMedium, sortBy]);
 
   return (
     <AdminLayout
@@ -411,6 +449,77 @@ export default function PapersManagement() {
         </motion.div>
       )}
 
+      <div className="mb-6 rounded-xl border border-white/10 bg-white/5 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search title, subject, medium"
+            className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:border-gold transition-colors lg:col-span-2"
+          />
+          <select
+            value={filterSubject}
+            onChange={(e) => setFilterSubject(e.target.value)}
+            className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-gold transition-colors"
+          >
+            <option value="all" className="bg-navy">All Subjects</option>
+            {availableSubjects.map((subject) => (
+              <option key={subject} value={subject} className="bg-navy">{subject}</option>
+            ))}
+          </select>
+          <select
+            value={filterYear}
+            onChange={(e) => setFilterYear(e.target.value)}
+            className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-gold transition-colors"
+          >
+            <option value="all" className="bg-navy">All Years</option>
+            {availableYears.map((year) => (
+              <option key={year} value={year} className="bg-navy">{year}</option>
+            ))}
+          </select>
+          <select
+            value={filterMedium}
+            onChange={(e) => setFilterMedium(e.target.value)}
+            className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-gold transition-colors"
+          >
+            <option value="all" className="bg-navy">All Mediums</option>
+            <option value="English" className="bg-navy">English</option>
+            <option value="Sinhala" className="bg-navy">Sinhala</option>
+          </select>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="text-sm text-white/60">
+            Showing <span className="text-white font-semibold">{filteredPapers.length}</span> of {papers.length} papers
+          </div>
+          <div className="flex items-center gap-3">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'title')}
+              className="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-gold transition-colors"
+            >
+              <option value="newest" className="bg-navy">Newest Year</option>
+              <option value="oldest" className="bg-navy">Oldest Year</option>
+              <option value="title" className="bg-navy">Title A-Z</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setFilterSubject('all');
+                setFilterYear('all');
+                setFilterMedium('all');
+                setSortBy('newest');
+              }}
+              className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Papers List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (
@@ -422,8 +531,13 @@ export default function PapersManagement() {
             <p className="text-white/60 text-base">No papers uploaded yet.</p>
             <p className="text-white/40 text-base mt-2">Click upload to add papers.</p>
           </div>
+        ) : filteredPapers.length === 0 ? (
+          <div className="col-span-full text-center py-12">
+            <p className="text-white/60 text-base">No papers match your search or filters.</p>
+            <p className="text-white/40 text-base mt-2">Try different filter values or clear filters.</p>
+          </div>
         ) : (
-          papers.map((paper, index) => (
+          filteredPapers.map((paper, index) => (
             <motion.div
               key={paper.id}
               initial={{ opacity: 0, y: 20 }}
