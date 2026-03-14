@@ -10,7 +10,6 @@ import {
   updateProjectEvent,
   deleteProjectEvent,
 } from '@/src/lib/database';
-import { cloudinaryFolders } from '@/src/lib/storage';
 import { GlassCard } from '@/src/components/ThemeComponents';
 import ConfirmDialog from '@/src/components/ConfirmDialog';
 
@@ -143,16 +142,29 @@ export default function EventsManagement() {
       setUploading(true);
       setError('');
 
+      if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
+        throw new Error('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is not configured');
+      }
+      if (!process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) {
+        throw new Error('NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET is not configured');
+      }
+
       const newImageUrls: string[] = [];
       for (const image of selectedImages) {
-        const body = new FormData();
-        body.append('file', image);
-        body.append('folder', cloudinaryFolders.events);
-        body.append('resource_type', 'image');
-        const res = await fetch('/api/upload', { method: 'POST', body });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? 'Upload failed');
-        newImageUrls.push(data.url);
+        const data = new FormData();
+        data.append('file', image);
+        data.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
+
+        const res = await fetch(
+          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+          {
+            method: 'POST',
+            body: data,
+          }
+        );
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.error?.message ?? result.error ?? 'Upload failed');
+        newImageUrls.push(result.secure_url);
       }
 
       const payload = {
