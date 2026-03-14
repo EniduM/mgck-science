@@ -33,10 +33,11 @@ export default function PapersManagement() {
 
   const [formData, setFormData] = useState({
     title: '',
-    subject: 'Biology',
+    subject: 'Agriculture',
     year: new Date().getFullYear(),
     medium: 'English' as 'Sinhala' | 'English',
   });
+  const [customSubject, setCustomSubject] = useState('');
 
   useEffect(() => {
     fetchPapers();
@@ -58,10 +59,11 @@ export default function PapersManagement() {
   const handleResetForm = () => {
     setFormData({
       title: '',
-      subject: 'Biology',
+      subject: 'Agriculture',
       year: new Date().getFullYear(),
       medium: 'English',
     });
+    setCustomSubject('');
     setFile(null);
     setError('');
     setEditingPaper(null);
@@ -70,12 +72,14 @@ export default function PapersManagement() {
 
   const handleEdit = (paper: Paper) => {
     setEditingPaper(paper);
+    const isOther = !['Agriculture', 'Biology', 'BST', 'Chemistry', 'Maths', 'Physics'].includes(paper.subject);
     setFormData({
       title: paper.title,
-      subject: paper.subject,
+      subject: isOther ? 'Other' : paper.subject,
       year: paper.year,
       medium: paper.medium,
     });
+    setCustomSubject(isOther ? paper.subject : '');
     setFile(null);
     setError('');
     setShowForm(true);
@@ -132,7 +136,7 @@ export default function PapersManagement() {
 
       const paperData = {
         title: formData.title,
-        subject: formData.subject,
+        subject: formData.subject === 'Other' ? customSubject.trim() || 'Other' : formData.subject,
         year: formData.year,
         medium: formData.medium,
         downloadUrl,
@@ -143,7 +147,8 @@ export default function PapersManagement() {
       const isEdit = !!editingPaper;
       const editId = editingPaper?.id;
       setShowForm(false);
-      setFormData({ title: '', subject: 'Biology', year: new Date().getFullYear(), medium: 'English' });
+      setFormData({ title: '', subject: 'Agriculture', year: new Date().getFullYear(), medium: 'English' });
+      setCustomSubject('');
       setFile(null);
       setError('');
       setEditingPaper(null);
@@ -179,7 +184,7 @@ export default function PapersManagement() {
     }
   };
 
-  const subjects = ['Biology', 'Chemistry', 'Physics', 'Combined Science'];
+  const subjects = ['Agriculture', 'Biology', 'BST', 'Chemistry', 'Maths', 'Physics', 'Other'];
 
   return (
     <AdminLayout
@@ -264,9 +269,10 @@ export default function PapersManagement() {
                 </label>
                 <select
                   value={formData.subject}
-                  onChange={(e) =>
-                    setFormData({ ...formData, subject: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, subject: e.target.value });
+                    if (e.target.value !== 'Other') setCustomSubject('');
+                  }}
                   className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:border-gold transition-colors"
                 >
                   {subjects.map((subject) => (
@@ -275,6 +281,15 @@ export default function PapersManagement() {
                     </option>
                   ))}
                 </select>
+                {formData.subject === 'Other' && (
+                  <input
+                    type="text"
+                    value={customSubject}
+                    onChange={(e) => setCustomSubject(e.target.value)}
+                    placeholder="Enter subject name"
+                    className="mt-2 w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:border-gold transition-colors"
+                  />
+                )}
               </div>
 
               <div>
