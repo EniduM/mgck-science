@@ -118,25 +118,42 @@ export default function PapersManagement() {
       setUploading(true);
       setError('');
 
+      if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
+        throw new Error('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is not configured');
+      }
+      if (!process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) {
+        throw new Error('NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET is not configured');
+      }
+
       let downloadUrl = editingPaper?.downloadUrl ?? '';
       let fileSize = editingPaper?.fileSize ?? '';
+      const selectedSubject =
+        formData.subject === 'Other' ? customSubject.trim() || 'Other' : formData.subject;
 
       // Upload new file if provided
       if (file) {
-        const uploadBody = new FormData();
-        uploadBody.append('file', file);
-        uploadBody.append('folder', `mgck-science/papers/${formData.year}/${formData.subject}`);
-        uploadBody.append('resource_type', 'raw');
-        const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadBody });
+        const data = new FormData();
+        data.append('file', file);
+        data.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
+        data.append('folder', `mgck-science/papers/${formData.year}/${selectedSubject}`);
+
+        const uploadRes = await fetch(
+          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`,
+          {
+            method: 'POST',
+            body: data,
+          }
+        );
+
         const uploadData = await uploadRes.json();
-        if (!uploadRes.ok) throw new Error(uploadData.error ?? 'Upload failed');
-        downloadUrl = uploadData.url;
+        if (!uploadRes.ok) throw new Error(uploadData.error?.message ?? uploadData.error ?? 'Upload failed');
+        downloadUrl = uploadData.secure_url;
         fileSize = (file.size / 1024).toFixed(2) + ' KB';
       }
 
       const paperData = {
         title: formData.title,
-        subject: formData.subject === 'Other' ? customSubject.trim() || 'Other' : formData.subject,
+        subject: selectedSubject,
         year: formData.year,
         medium: formData.medium,
         downloadUrl,
