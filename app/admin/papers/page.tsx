@@ -151,10 +151,44 @@ export default function PapersManagement() {
         const subjectPath = sanitizePathSegment(selectedSubject) || 'other';
         const originalName = file.name.replace(/\.pdf$/i, '');
         const fileName = `${sanitizePathSegment(originalName) || 'paper'}-${Date.now()}.pdf`;
-        const storageRef = ref(storage, `papers/${formData.year}/${subjectPath}/${fileName}`);
 
-        await uploadBytes(storageRef, file, { contentType: 'application/pdf' });
-        downloadUrl = await getDownloadURL(storageRef);
+        // Primary upload target is Firebase Storage; if that fails (e.g., storage rules),
+        // gracefully fall back to Cloudinary raw upload so admin uploads are not blocked.
+        try {
+          const storageRef = ref(storage, `papers/${formData.year}/${subjectPath}/${fileName}`);
+          await uploadBytes(storageRef, file, { contentType: 'application/pdf' });
+          downloadUrl = await getDownloadURL(storageRef);
+        } catch (firebaseUploadError) {
+          if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
+            throw firebaseUploadError;
+          }
+          if (!process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET) {
+            throw firebaseUploadError;
+          }
+
+          const data = new FormData();
+          data.append('file', file);
+          data.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET);
+          data.append('folder', `mgck-science/papers/${formData.year}/${selectedSubject}`);
+
+          const uploadRes = await fetch(
+            `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`,
+            {
+              method: 'POST',
+              body: data,
+            }
+          );
+          const uploadData = await uploadRes.json();
+
+          if (!uploadRes.ok) {
+            const cloudinaryError = uploadData?.error?.message ?? uploadData?.error ?? 'Cloudinary upload failed';
+            throw new Error(cloudinaryError);
+          }
+
+          downloadUrl = uploadData.secure_url;
+          console.warn('Firebase upload failed; used Cloudinary fallback for paper upload.', firebaseUploadError);
+        }
+
         fileSize = (file.size / 1024).toFixed(2) + ' KB';
       }
 
@@ -189,7 +223,7 @@ export default function PapersManagement() {
 
     } catch (error) {
       console.error('Error saving paper:', error);
-      setError('Error saving paper. Please try again.');
+      setError(error instanceof Error ? error.message : 'Error saving paper. Please try again.');
       setUploading(false);
     }
   };
