@@ -13,11 +13,31 @@ interface Banner {
 
 const BannerCarousel: React.FC = () => {
   const banners: Banner[] = [
-    { id: 2, src: '/banners/banner2.jpg', alt: 'Banner 2' },
-    { id: 3, src: '/banners/banner3.jpeg', alt: 'Banner 3' },
-    { id: 4, src: '/banners/banner4.jpeg', alt: 'Banner 4' },
-    { id: 5, src: '/banners/banner5.jpeg', alt: 'Banner 5' },
-    { id: 6, src: '/banners/banner6.jpeg', alt: 'Banner 6' },
+    {
+      id: 2,
+      src: '/banners/banner2.jpg',
+      alt: "Mahamaya Girls' College Senior Science Society activity showcase",
+    },
+    {
+      id: 3,
+      src: '/banners/banner3.jpeg',
+      alt: 'Students participating in Senior Science Society event',
+    },
+    {
+      id: 4,
+      src: '/banners/banner4.jpeg',
+      alt: 'Science learning and collaboration at Mahamaya Girls College',
+    },
+    {
+      id: 5,
+      src: '/banners/banner5.jpeg',
+      alt: 'Senior Science Society project and innovation presentation',
+    },
+    {
+      id: 6,
+      src: '/banners/banner6.jpeg',
+      alt: 'School science activity highlights and student achievements',
+    },
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);

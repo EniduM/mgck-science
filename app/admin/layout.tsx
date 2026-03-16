@@ -1,6 +1,13 @@
-'use client';
+import type { Metadata } from 'next';
+import AdminRouteLayout from '@/src/components/AdminRouteLayout';
+import { buildMetadata } from '@/src/lib/seo';
 
-import ProtectedRoute from '@/src/components/ProtectedRoute';
+export const metadata: Metadata = buildMetadata({
+  title: "Admin | Mahamaya Girls' College Senior Science Society",
+  description: 'Admin section for managing society website content.',
+  path: '/admin',
+  index: false,
+});
 
 export default function AdminLayout({
   children,
@@ -8,21 +15,6 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute>
-      <div className="flex flex-col min-h-screen">
-        <div className="flex-1">{children}</div>
-        <footer className="w-full py-5 px-6 text-center border-t border-white/10 bg-[#0a1528]">
-          <p className="text-xs text-gray-500">
-            © 2026 Senior Science Society, Mahamaya Girls&apos; College. All rights reserved.
-          </p>
-          <p className="text-xs text-gray-600 mt-1">
-            Designed &amp; Developed by{' '}
-            <span className="text-amber-600/70">Nathumini Jayathilake</span>
-            {' '}&amp;{' '}
-            <span className="text-amber-600/70">Enidu Maluddeniya</span>
-          </p>
-        </footer>
-      </div>
-    </ProtectedRoute>
+    <AdminRouteLayout>{children}</AdminRouteLayout>
   );
 }
