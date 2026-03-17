@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     images: [
       {
-        url: "/Logos/2.png",
+        url: `${SITE_URL}/Logos/2.png`,
         width: 512,
         height: 512,
         alt: SITE_NAME,
@@ -48,8 +48,14 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/Logos/2.png',
-    apple: '/Logos/2.png',
+    icon: [
+      {
+        url: "/Logos/2.png",
+        type: "image/png",
+      },
+    ],
+    shortcut: "/Logos/2.png",
+    apple: "/Logos/2.png",
   },
 };
 
@@ -57,7 +63,8 @@ const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "EducationalOrganization",
   name: "Mahamaya Girls' College Senior Science Society",
-  url: SITE_URL,
+  url: "https://www.mayanzsci.org.lk",
+  logo: "https://www.mayanzsci.org.lk/Logos/2.png",
 };
 
 export default function RootLayout({
